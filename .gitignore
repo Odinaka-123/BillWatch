@@ -1,0 +1,41 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.eggs/
+dist/
+build/
+.env
+
+# Virtual environment
+venv/
+.venv/
+
+# Data (keep structure, ignore files)
+data/raw/street_view/*
+data/raw/satellite/*
+data/processed/*
+!data/raw/street_view/.gitkeep
+!data/raw/satellite/.gitkeep
+!data/processed/.gitkeep
+
+# Models
+models/weights/*.pt
+models/exports/*
+!models/weights/.gitkeep
+
+# Database
+*.db
+
+# Notebooks
+.ipynb_checkpoints/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Streamlit
+.streamlit/secrets.toml
+
+# Logs
+logs/

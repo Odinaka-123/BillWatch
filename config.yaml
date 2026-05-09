@@ -1,0 +1,28 @@
+model:
+  weights: models/weights/billwatch.pt
+  confidence: 0.45
+  iou_threshold: 0.5
+  img_size: 640
+  device: cpu
+
+data:
+  raw_street_view: data/raw/street_view
+  raw_satellite: data/raw/satellite
+  annotated: data/annotated
+  processed: data/processed
+
+legality:
+  min_billboard_area_m2: 10
+  permit_db: data/billwatch.db
+  osm_timeout: 30
+
+dashboard:
+  port: 8501
+  map_center_lat: 6.5244
+  map_center_lon: 3.3792
+  map_zoom: 12
+
+alerts:
+  telegram_enabled: false
+  telegram_token: ""
+  telegram_chat_id: ""

@@ -1,0 +1,1 @@
+from src.legality.classifier import classify

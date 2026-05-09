@@ -1,0 +1,24 @@
+# Core
+ultralytics
+opencv-python
+numpy
+Pillow
+
+# Geospatial
+requests
+geopy
+overpy
+
+# Database
+SQLAlchemy
+
+# Dashboard
+streamlit
+folium
+streamlit-folium
+
+# Utilities
+pyyaml
+python-dotenv
+tqdm
+pandas
