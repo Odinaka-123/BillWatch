@@ -1,15 +1,15 @@
+import sys
+from pathlib import Path
+sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
+
 import streamlit as st
 import folium
 from streamlit_folium import st_folium
-from pathlib import Path
 import pandas as pd
 from src.utils.config import config
 from src.utils.logger import get_logger
 from src.legality.permit_checker import init_db
-
-logger = get_logger("dashboard")
-
-init_db()
+from src.dashboard.auth import init_auth_db, create_user, verify_user
 
 st.set_page_config(
     page_title="BillWatch",
@@ -17,8 +17,66 @@ st.set_page_config(
     layout="wide"
 )
 
+init_auth_db()
+init_db()
+logger = get_logger("dashboard")
+
+# --- Auth gate ---
+if "user" not in st.session_state:
+    st.session_state.user = None
+
+def show_auth():
+    col1, col2, col3 = st.columns([1, 2, 1])
+    with col2:
+        st.title("🚨 BillWatch")
+        st.caption("Municipal billboard enforcement system")
+        st.divider()
+
+        tab1, tab2 = st.tabs(["Login", "Sign Up"])
+
+        with tab1:
+            st.subheader("Login")
+            username = st.text_input("Username", key="login_user")
+            password = st.text_input("Password", type="password", key="login_pass")
+            if st.button("Login", type="primary", use_container_width=True):
+                user = verify_user(username, password)
+                if user:
+                    st.session_state.user = user
+                    st.rerun()
+                else:
+                    st.error("Invalid username or password.")
+
+        with tab2:
+            st.subheader("Create account")
+            new_user = st.text_input("Username", key="signup_user")
+            new_pass = st.text_input("Password", type="password", key="signup_pass")
+            new_pass2 = st.text_input("Confirm password", type="password", key="signup_pass2")
+            if st.button("Sign up", use_container_width=True):
+                if not new_user or not new_pass:
+                    st.error("Please fill in all fields.")
+                elif new_pass != new_pass2:
+                    st.error("Passwords do not match.")
+                elif len(new_pass) < 6:
+                    st.error("Password must be at least 6 characters.")
+                else:
+                    if create_user(new_user, new_pass):
+                        st.success("Account created. Please log in.")
+                    else:
+                        st.error("Username already exists.")
+
+if st.session_state.user is None:
+    show_auth()
+    st.stop()
+
+# --- Logged in ---
+st.sidebar.markdown(f"👤 **{st.session_state.user['username']}** `{st.session_state.user['role']}`")
+if st.sidebar.button("Logout"):
+    st.session_state.user = None
+    st.rerun()
+
 if "detections" not in st.session_state:
     st.session_state.detections = []
+
 
 def build_map(detections: list) -> folium.Map:
     m = folium.Map(
@@ -54,16 +112,16 @@ def build_map(detections: list) -> folium.Map:
 
 
 def metrics_row(detections: list):
-    total    = len(detections)
-    illegal  = sum(1 for d in detections if d["is_illegal"])
+    total     = len(detections)
+    illegal   = sum(1 for d in detections if d["is_illegal"])
     compliant = total - illegal
-    rate     = round((illegal / total * 100), 1) if total else 0
+    rate      = round((illegal / total * 100), 1) if total else 0
 
     c1, c2, c3, c4 = st.columns(4)
-    c1.metric("Total detected",  total)
-    c2.metric("Illegal",         illegal,  delta=None)
-    c3.metric("Compliant",       compliant)
-    c4.metric("Violation rate",  f"{rate}%")
+    c1.metric("Total detected", total)
+    c2.metric("Illegal",        illegal)
+    c3.metric("Compliant",      compliant)
+    c4.metric("Violation rate", f"{rate}%")
 
 
 def detections_table(detections: list):
@@ -87,7 +145,6 @@ def detections_table(detections: list):
 
 st.title("BillWatch — Illegal Billboard Detection")
 st.caption("Lagos, Nigeria · AI-powered enforcement dashboard")
-
 st.divider()
 
 with st.sidebar:
@@ -102,7 +159,7 @@ with st.sidebar:
     lat = st.number_input("Latitude",  value=6.5244, format="%.6f")
     lon = st.number_input("Longitude", value=3.3792, format="%.6f")
 
-    run = st.button("Run detection", type="primary", use_container_width=True)
+    run   = st.button("Run detection", type="primary", use_container_width=True)
     clear = st.button("Clear results", use_container_width=True)
 
     st.divider()
