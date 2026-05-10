@@ -1,6 +1,6 @@
 from sqlalchemy import create_engine, Column, String, Float, Boolean, DateTime
 from sqlalchemy.orm import declarative_base, sessionmaker
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
 from src.utils.config import config
 from src.utils.logger import get_logger
@@ -40,7 +40,7 @@ def check_permit(lat: float, lon: float, radius_deg: float = 0.0005) -> dict:
             Permit.lat.between(lat - radius_deg, lat + radius_deg),
             Permit.lon.between(lon - radius_deg, lon + radius_deg),
             Permit.active == True,
-            Permit.valid_until >= datetime.utcnow()
+            Permit.valid_until >= datetime.now(timezone.utc)
         ).all()
 
         if permits:
